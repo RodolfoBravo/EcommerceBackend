@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EcommerceBackend.Context;
 using EcommerceBackend.Models;
+using EcommerceBackend.Utils;
 
 namespace EcommerceBackend.Controllers
 {
@@ -19,6 +20,13 @@ namespace EcommerceBackend.Controllers
         public ProductsController(AppDbContext context)
         {
             _context = context;
+        }
+
+        private readonly FilesManagementFunctions _fileStorageService;
+
+        public ProductsController(FilesManagementFunctions fileStorageService)
+        {
+            _fileStorageService = fileStorageService;
         }
 
         // GET: api/Products
@@ -75,14 +83,28 @@ namespace EcommerceBackend.Controllers
 
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost("registe-product")]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
+            // Verificar si ya existe un producto con el mismo nombre y userId
+            var existingProduct = await _context.Products
+                .FirstOrDefaultAsync(p => p.name == product.name && p.userId == product.userId);
+
+            if (existingProduct != null)
+            {
+                // Si ya existe un producto con esos datos, devolver un mensaje de error
+                return BadRequest("Ya se ha creado un producto con el mismo nombre y usuario.");
+            }
+
+            // Si no existe, agregar el producto a la base de datos y guardar los cambios
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetProduct", new { id = product.id }, product);
         }
+
+        //Post api/Images
+        //images update
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]

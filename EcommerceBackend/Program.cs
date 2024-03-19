@@ -1,5 +1,6 @@
 using EcommerceBackend.Context;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 

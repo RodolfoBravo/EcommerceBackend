@@ -3,6 +3,7 @@ using EcommerceBackend.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240319045357_createProduct")]
+    partial class createProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,8 +99,9 @@ namespace EcommerceBackend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
 
-                    b.Property<int>("categoryId")
-                        .HasColumnType("int");
+                    b.Property<string>("category")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<string>("description")
                         .IsRequired()
@@ -114,9 +118,6 @@ namespace EcommerceBackend.Migrations
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("stock")
-                        .HasColumnType("int");
-
-                    b.Property<int>("userId")
                         .HasColumnType("int");
 
                     b.HasKey("id");

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240318204858_createProducts")]
-    partial class createProducts
+    [Migration("20240319050431_updateProduct")]
+    partial class updateProduct
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -88,35 +88,7 @@ namespace EcommerceBackend.Migrations
 
                     b.HasKey("id");
 
-                    b.HasIndex("productId");
-
                     b.ToTable("Images");
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.Option", b =>
-                {
-                    b.Property<int>("id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
-
-                    b.Property<string>("name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("productId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("value")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("id");
-
-                    b.HasIndex("productId");
-
-                    b.ToTable("Options");
                 });
 
             modelBuilder.Entity("EcommerceBackend.Models.Product", b =>
@@ -127,9 +99,8 @@ namespace EcommerceBackend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("id"));
 
-                    b.Property<string>("category")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("categoryId")
+                        .HasColumnType("int");
 
                     b.Property<string>("description")
                         .IsRequired()
@@ -146,6 +117,9 @@ namespace EcommerceBackend.Migrations
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("stock")
+                        .HasColumnType("int");
+
+                    b.Property<int>("userId")
                         .HasColumnType("int");
 
                     b.HasKey("id");
@@ -194,31 +168,6 @@ namespace EcommerceBackend.Migrations
                     b.HasKey("id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.Image", b =>
-                {
-                    b.HasOne("EcommerceBackend.Models.Product", null)
-                        .WithMany("images")
-                        .HasForeignKey("productId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.Option", b =>
-                {
-                    b.HasOne("EcommerceBackend.Models.Product", null)
-                        .WithMany("options")
-                        .HasForeignKey("productId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.Product", b =>
-                {
-                    b.Navigation("images");
-
-                    b.Navigation("options");
                 });
 #pragma warning restore 612, 618
         }
