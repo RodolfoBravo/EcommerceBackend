@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EcommerceBackend.Context;
 using EcommerceBackend.Models;
-using EcommerceBackend.Utils;
 
 namespace EcommerceBackend.Controllers
 {
@@ -22,109 +21,131 @@ namespace EcommerceBackend.Controllers
             _context = context;
         }
 
-        private readonly FilesManagementFunctions _fileStorageService;
-
-        public ProductsController(FilesManagementFunctions fileStorageService)
-        {
-            _fileStorageService = fileStorageService;
-        }
-
-        // GET: api/Products
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
-        {
-            return await _context.Products.ToListAsync();
-        }
-
-        // GET: api/Products/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            return product;
-        }
-
-        // PUT: api/Products/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
-        {
-            if (id != product.id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(product).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
 
         // POST: api/Products
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("registe-product")]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        public async Task<ActionResult<Product>> PostProduct([FromForm] ProductWithImages productWithImages)
         {
-            // Verificar si ya existe un producto con el mismo nombre y userId
-            var existingProduct = await _context.Products
-                .FirstOrDefaultAsync(p => p.name == product.name && p.userId == product.userId);
-
-            if (existingProduct != null)
+            // Crear un nuevo producto
+            var newProduct = new Product
             {
-                // Si ya existe un producto con esos datos, devolver un mensaje de error
-                return BadRequest("Ya se ha creado un producto con el mismo nombre y usuario.");
-            }
+                name = productWithImages.name,
+                description = productWithImages.description,
+                price = productWithImages.price,
+                categoryId = productWithImages.categoryId,
+                isAvailable = productWithImages.isAvailable,
+                stock = productWithImages.stock,
+                userId = productWithImages.userId
+            };
 
-            // Si no existe, agregar el producto a la base de datos y guardar los cambios
-            _context.Products.Add(product);
+            // Agregar el producto a la base de datos y guardar los cambios
+            _context.Products.Add(newProduct);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetProduct", new { id = product.id }, product);
-        }
-
-        //Post api/Images
-        //images update
-
-        // DELETE: api/Products/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            // Guardar las imágenes en la tabla de imágenes con el ID del producto
+            foreach (var imageFile in productWithImages.images)
             {
-                return NotFound();
+                var imageUrl = Path.Combine("Files", productWithImages.userId.ToString(), productWithImages.name.ToString(), imageFile.FileName);
+                Directory.CreateDirectory(Path.GetDirectoryName(imageUrl));
+                using (var stream = new FileStream(imageUrl, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(stream);
+                }
+
+                // Guardar la URL de la imagen en la tabla de imágenes
+                var image = new Image
+                {
+                    url = imageUrl,
+                    productId = newProduct.id
+                };
+                _context.Images.Add(image);
             }
 
+            await _context.SaveChangesAsync();
+
+            return Ok(newProduct);
+
+        }
+
+        public class ProductWithImages
+        {
+            public string name { get; set; }
+            public string description { get; set; }
+            public decimal price { get; set; }
+            public int categoryId { get; set; }
+            public bool isAvailable { get; set; }
+            public int stock { get; set; }
+            public int userId { get; set; }
+            public List<IFormFile> images { get; set; }
+        }
+
+        [HttpGet("get-products-by-user/{userId}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByUser(int userId)
+        {
+            var products = await _context.Products
+                .Include(p => p.images)
+                .Where(p => p.userId == userId)
+                .ToListAsync();
+
+            if (products == null || !products.Any())
+            {
+                return NotFound("No se encontraron productos para el usuario especificado.");
+            }
+
+            return Ok(products);
+        }
+
+        [HttpGet("get-products")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
+        {
+            var products = await _context.Products
+                .Include(p => p.images)
+                .ToListAsync();
+
+            if (products == null || !products.Any())
+            {
+                return NotFound("No se encontraron productos en el sistema.");
+            }
+
+            return Ok(products);
+        }
+
+        // DELETE: api/Products/5
+        [HttpDelete("delete-product/{productId}")]
+        public async Task<ActionResult> DeleteProduct(int productId)
+        {
+            var product = await _context.Products
+                .Include(p => p.images)
+                .FirstOrDefaultAsync(p => p.id == productId);
+
+            if (product == null)
+            {
+                return NotFound("Producto no encontrado.");
+            }
+
+            // Eliminar las imágenes asociadas al producto y sus archivos en el sistema
+            foreach (var image in product.images)
+            {
+                if (System.IO.File.Exists(image.url))
+                {
+                    System.IO.File.Delete(image.url);
+                }
+                _context.Images.Remove(image);
+            }
+
+            // Eliminar el producto de la base de datos
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+            // Eliminar los documentos asociados al producto en la carpeta 'files'
+            var filesPath = Path.Combine("Files", product.userId.ToString(), product.name);
+            if (Directory.Exists(filesPath))
+            {
+                Directory.Delete(filesPath, true);
+            }
 
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.id == id);
+            return Ok("Producto y documentos eliminados correctamente.");
         }
     }
 }

@@ -10,6 +10,7 @@
         public bool isAvailable { get; set; }
         public int stock { get; set; }
         public int userId { get; set; }
+        public List<Image> images { get; set; }
 
     }
 

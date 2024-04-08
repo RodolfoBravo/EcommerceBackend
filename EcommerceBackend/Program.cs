@@ -1,5 +1,7 @@
 using EcommerceBackend.Context;
+using EcommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,9 +15,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSingleton<Cart>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ecommerce API", Version = "v1" });
+    // Add Swashbuckle filters
+    c.ExampleFilters();
+});
+builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
+
 
 var app = builder.Build();
 
