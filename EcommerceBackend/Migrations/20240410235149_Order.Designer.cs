@@ -4,6 +4,7 @@ using EcommerceBackend.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcommerceBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240410235149_Order")]
+    partial class Order
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,60 +134,6 @@ namespace EcommerceBackend.Migrations
                     b.ToTable("Images");
                 });
 
-            modelBuilder.Entity("EcommerceBackend.Models.Order", b =>
-                {
-                    b.Property<int>("OrderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderId"));
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("OrderId");
-
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.OrderDetail", b =>
-                {
-                    b.Property<int>("OrderDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderDetailId"));
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("OrderDetailId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("OrderDetails");
-                });
-
             modelBuilder.Entity("EcommerceBackend.Models.Product", b =>
                 {
                     b.Property<int>("id")
@@ -280,23 +229,9 @@ namespace EcommerceBackend.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("EcommerceBackend.Models.OrderDetail", b =>
-                {
-                    b.HasOne("EcommerceBackend.Models.Order", null)
-                        .WithMany("OrderDetails")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("EcommerceBackend.Models.Cart", b =>
                 {
                     b.Navigation("items");
-                });
-
-            modelBuilder.Entity("EcommerceBackend.Models.Order", b =>
-                {
-                    b.Navigation("OrderDetails");
                 });
 
             modelBuilder.Entity("EcommerceBackend.Models.Product", b =>
