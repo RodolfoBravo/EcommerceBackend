@@ -26,6 +26,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowOrigin",
+        builder => builder.WithOrigins("http://localhost:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
@@ -39,6 +47,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+// Use CORS
+app.UseCors("AllowOrigin");
 
 app.MapControllers();
 

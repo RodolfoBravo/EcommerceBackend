@@ -67,6 +67,13 @@ namespace EcommerceBackend.Controllers
         [HttpPost("RegisterUser")]
         public async Task<ActionResult<User>> RegisterUser(User user)
         {
+            // Comprobar si el correo electrónico ya existe en la base de datos
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.email == user.email);
+            if (existingUser != null)
+            {
+                return BadRequest("El correo electrónico ya está registrado");
+            }
+
             user.password = HashFunctions.HashPassword(user.password);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -75,7 +82,21 @@ namespace EcommerceBackend.Controllers
             var tokenString = TokenFunctions.GenerateToken(user.id);
 
             // Devolver token en la respuesta
-            return Ok(new { Token = tokenString });
+            return Ok(new {
+                success = true,
+                Token = tokenString,
+                User = new
+                {
+                    Id = user.id,
+                    userName = user.userName,
+                    email = user.email,
+                    firstName = user.firstName,
+                    lastName = user.lastName,
+                    birthdate = user.birthdate,
+                    phone = user.phone,
+                    role = user.role
+                }
+            });
         }
 
         //POST Loggin user
@@ -96,7 +117,21 @@ namespace EcommerceBackend.Controllers
             var tokenString = TokenFunctions.GenerateToken(user.id);
 
             // Devolver token y la información del usuario en la respuesta
-            return Ok(new { Token = tokenString });
+            return Ok(new {
+                success = true,
+                Token = tokenString,
+                User = new
+                {
+                    Id = user.id,
+                    userName = user.userName,
+                    email = user.email,
+                    firstName = user.firstName,
+                    lastName = user.lastName,
+                    birthdate = user.birthdate,
+                    phone = user.phone,
+                    role = user.role
+                }
+            });
         }
 
         [HttpGet("GetUser/{token}")]
